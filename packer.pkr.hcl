@@ -43,7 +43,6 @@ build {
   name    = "learn-packer"
   sources = ["source.amazon-ebs.ubuntu"]
 
-
   provisioner "file" {
     destination = "/tmp/server.js"
     source      = "server.js"
