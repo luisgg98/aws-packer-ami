@@ -17,13 +17,13 @@ packer {
 
 source "amazon-ebs" "ubuntu" {
 
-  ami_name                    = "unir-luis-aws-packer-activity-1"
+  ami_name                    = "unir-luis-aws-packer-activity"
   instance_type               = "t2.micro"
   region                      = "eu-west-1"
-  vpc_id ="vpc-0a60677de1be17332"
-  subnet_id                   = "subnet-0f7196f3559d61d10"
+  vpc_id                      = "${var.vpc_id}"
+  subnet_id                   = "${var.subnet_id}"
   associate_public_ip_address = true
-  security_group_ids = ["sg-08084adb365fa1a54","sg-0bb50ef687b7e2aec"]
+  security_group_ids = ["${var.security_group_id_1}"]
   temporary_key_pair_type= "ed25519"
   ssh_timeout = "45m"
   source_ami_filter {
@@ -56,6 +56,23 @@ build {
   provisioner "shell" {
     script       = "install.sh"
   }
+
+
+  post-processor "manifest" {
+
+  }
+
+  post-processor "shell-local" {
+    inline = [
+      "SECURITY_GROUP_ID='${var.security_group_id_1}'",
+      "SUBNET_ID='${var.subnet_id}'",
+      "AMI_ID=$(jq -r '.builds[-1].artifact_id' packer-manifest.json | cut -d \":\" -f2)",
+      "echo $AMI_ID",
+      "echo 'Network Interfaces SECURITY GROUP: $SECURITY_GROUP_ID SUBNET: $SUBNET_ID'",
+      "aws ec2 run-instances --image-id $AMI_ID --instance-type t2.micro --key-name actividadpacker --security-group-ids $SECURITY_GROUP_ID --subnet-id $SUBNET_ID --region \"eu-west-1\""
+    ]
+  }
+
 
 }
 
